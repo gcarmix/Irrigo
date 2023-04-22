@@ -1,0 +1,80 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MQTT Settings</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  
+</head>
+
+<body>
+  <div class="topnav">
+    <a href="/" style="float:left">Irrigo</a>
+    <div class="dropdown" style="float:right">
+      <button class="dropbtn">Settings
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-content">
+        <a href="/mqtt">MQTT</a>
+        <a href="/wifi">WiFi</a>
+        <a href="/calibration">Calibration</a>
+        <a href="/update">Update</a>
+      </div>
+    </div> 
+  </div>  
+          <div class="formbg">
+            <div class="formbg-inner padding-horizontal--48">
+              <span class="padding-bottom--15">MQTT Settings</span>
+              <div class="field padding-bottom--24">Status: %MQTT_CONNECTED%</div>
+              <form id="set-mqtt" action="/set_mqtt" method="POST">
+                <div class="field padding-bottom--24">
+                  <label for="broker_ip">Broker Address</label>
+                  <input type="broker_ip" name="broker_ip" value="%MQTT_BROKER%">
+                </div>
+                <div class="field padding-bottom--24">
+                  <div class="grid--50-50">
+                    <label for="broker_port">Broker Port</label>
+                  </div>
+                  <input type="broker_port" name="broker_port" value="%MQTT_PORT%">
+                </div>
+                <div class="field padding-bottom--24">
+                  <div class="grid--50-50">
+                    <label for="mqtt_client_name">MQTT Client name</label>
+                  </div>
+                  <input type="mqtt_client_name" name="mqtt_client_name" value="%MQTT_CLIENT_NAME%">
+                </div>
+                <div class="field padding-bottom--24">
+                  <div class="grid--50-50">
+                    <label for="mqtt_topic">MQTT Topic</label>
+                  </div>
+                  <input type="mqtt_topic" name="mqtt_topic" value="%MQTT_TOPIC%">
+                </div>
+                <div class="field padding-bottom--24">
+                  <div class="grid--50-50">
+                    <label for="mqtt_user">Client user name</label>
+                  </div>
+                  <input type="mqtt_user" name="mqtt_user" value="%MQTT_USER%">
+                </div>
+                <div class="field padding-bottom--24">
+                  <div class="grid--50-50">
+                    <label for="mqtt_password">Client password</label>
+                  </div>
+                  <input type="password" name="mqtt_password" value="%MQTT_PASSWORD%">
+                </div>
+                
+                <!--div class="field field-checkbox padding-bottom--24 flex-flex align-center">
+                  <label for="checkbox">
+                    <input type="checkbox" name="checkbox"> Stay signed in for a week
+                  </label>
+                </div-->
+                <div class="field padding-bottom--24">
+                  <input type="submit" name="submit" value="Save">
+                </div>
+              </form>
+            </div>
+          </div>
+  <div class="footer">
+    <p>by gcarmix</p>
+  </div>
+</body>
+
+</html>

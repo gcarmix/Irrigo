@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<script src="jquery.min.js"></script>
+
+
+
+  </head>
+
+<body>
+  
+  <div class="topnav">
+    <a href="/" style="float:left">Irrigo</a>
+    <div class="dropdown" style="float:right">
+      <button class="dropbtn">Settings
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-content">
+        <a href="/mqtt">MQTT</a>
+        <a href="/wifi">WiFi</a>
+        <a href="/update">Update</a>
+      </div>
+    </div> 
+  </div>
+
+  <div class="content">
+      <label for="check1">Channel 1</label>
+      <label class="switch">
+        <input type="checkbox" id="chan1" onclick="toggleCheckbox(this)" %CHAN1_STATE%>
+        <span class="slider round"></span>
+      </label>
+      <br>
+      <br>
+      <label for="check2">Channel 2</label>
+      <label class="switch">
+        <input type="checkbox" id="chan2" onclick="toggleCheckbox(this)" %CHAN2_STATE%>
+        <span class="slider round"></span>
+      </label>
+      <br>
+      <br>
+      <label for="check3">Channel 3</label>
+      <label class="switch">
+        <input type="checkbox" id="chan3" onclick="toggleCheckbox(this)" %CHAN3_STATE%>
+        <span class="slider round"></span>
+      </label>
+      <br>
+      <br>
+      <label for="check4">Channel 4</label>
+      <label class="switch">
+        <input type="checkbox" id="chan4" onclick="toggleCheckbox(this)" %CHAN4_STATE%>
+        <span class="slider round"></span>
+      </label>
+      
+  </div>
+
+<script src="action.js"></script>
+<div class="footer">
+  <p>by gcarmix</p>
+</div>
+
+</body>
+</html>
