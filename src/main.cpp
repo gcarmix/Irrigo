@@ -23,14 +23,15 @@ int ontime[4] = {0,0,0,0};
 void control();
 AsyncWebServer server(80);
 WiFiMulti wiFiMulti;
-#define FW_VERSION "0.1.1"
+#define FW_VERSION "1.0.0"
 bool updateRequested = false;
 typedef struct CONFIG_S{
   char essid[32] = "";
   char password[32] = "";
   char mqtt_broker[32] = "";
-  char mqtt_client_name[32] = "";
-  char mqtt_topic[32] = "";
+  char mqtt_client_name[32] = "irrigo_client";
+  char mqtt_tele_topic[32] = "tele/irrigation";
+  char mqtt_cmnd_topic[32] = "cmnd/irrigation";
   char mqtt_user[32] = "";
   char mqtt_password[32] = "";
   uint16_t mqtt_port = 1883;
@@ -117,9 +118,8 @@ int mqttReconnect()
     if(mqttClient.connect(Config.mqtt_client_name,Config.mqtt_user,Config.mqtt_password)){
       Serial.println("connected");
       char msg[64];
-    //sprintf(msg,"{\"Channels\":[%d,%d,%d,%d]}",channels[0],channels[1],channels[2],channels[3]);
-    //mqttClient.publish(Config.mqtt_topic,msg);
-      mqttClient.subscribe("cmnd/irrigation/+");
+      sprintf(msg,"%s/+",Config.mqtt_cmnd_topic);
+      mqttClient.subscribe(msg);
       return 0;
     }
     else
@@ -142,10 +142,10 @@ void mqttCallback(char* topic,uint8_t* payload,unsigned int length){
   
   for (i=0;i<4;i++)
   {
-    sprintf(test_topic,"cmnd/irrigation/%d",i);
+    sprintf(test_topic,"%s/%d",Config.mqtt_cmnd_topic,i+1);
     if(!strcmp(topic,test_topic))
     {
-      sprintf(test_topic,"tele/irrigation/%d",i);
+      sprintf(test_topic,"%s/%d",Config.mqtt_tele_topic,i+1);
       if(!strcmp((char*)payload,"ON"))
       {
         channels[i] = 1;
@@ -189,9 +189,13 @@ String mqttProcessor(String var)
   {
     return String(Config.mqtt_password);
   }
-    if(var == "MQTT_TOPIC")
+  if(var == "MQTT_TELE_TOPIC")
   {
-    return String(Config.mqtt_topic);
+    return String(Config.mqtt_tele_topic);
+  }
+  if(var == "MQTT_CMND_TOPIC")
+  {
+    return String(Config.mqtt_cmnd_topic);
   }
   if(var == "MQTT_CONNECTED")
   {
@@ -418,59 +422,33 @@ if(strlen(Config.essid) == 0 )
     const char* dataType = "text/html";
     AsyncWebParameter * chan = request->getParam(0);
     AsyncWebParameter * val = request->getParam(1);
-    if(chan->value() == "chan1")
+    Serial.println(chan->value().substring(0,3));
+    int i;
+    char msg[64];
+    if(chan->value().substring(0,4) == "chan")
     {
-      if(val->value() == "true")
+      Serial.println("CHAN toggle request");
+      for(i=0;i<4;i++)
       {
-        channels[0] = 1;
-        mqttClient.publish("tele/irrigation/0","ON");
+        if(chan->value().charAt(4) == ('1'+i))
+        {
+          sprintf(msg,"%s/%d",Config.mqtt_tele_topic,i+1);
+          if(val->value() == "true")
+                {
+                  channels[i] = 1;
+                  mqttClient.publish(msg,"ON");
+                }
+                else
+                {
+                  channels[i] = 0;
+                  mqttClient.publish(msg,"OFF");
+                }
+        }
+
       }
-      else
-      {
-        channels[0] = 0;
-        mqttClient.publish("tele/irrigation/0","OFF");
-      }
-    }
-    else if(chan->value() == "chan2")
-    {
-      if(val->value() == "true")
-      {
-        channels[1] = 1;
-        mqttClient.publish("tele/irrigation/1","ON");
-      }
-      else
-      {
-        channels[1] = 0;
-        mqttClient.publish("tele/irrigation/1","OFF");
-      }
-    }
-    else if(chan->value() == "chan3")
-    {
-      if(val->value() == "true")
-      {
-        channels[2] = 1;
-        mqttClient.publish("tele/irrigation/2","ON");
-      }
-      else
-      {
-        channels[2] = 0;
-        mqttClient.publish("tele/irrigation/2","OFF");
-      }
-    }
-    else if(chan->value() == "chan4")
-    {
-      if(val->value() == "true")
-      {
-        channels[3] = 1;
-        mqttClient.publish("tele/irrigation/3","ON");
-      }
-      else
-      {
-        channels[3] = 0;
-        mqttClient.publish("tele/irrigation/3","OFF");
-      }
-    }
+      
     control();
+    }
     request->send_P(200,dataType, wifi_html,wifi_html_len,netProcessor);
   });
 /*handling uploading firmware file */
@@ -498,7 +476,8 @@ server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
     String mqtt_client_name;
     String mqtt_user;
     String mqtt_password;
-    String mqtt_topic;
+    String mqtt_cmnd_topic;
+    String mqtt_tele_topic;
     int port;
     int params = request->params();
     Serial.println(params);
@@ -533,9 +512,13 @@ server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
         {
           mqtt_password = p->value(); 
         }
-        if(p->name() == "mqtt_topic")
+        if(p->name() == "mqtt_tele_topic")
         {
-          mqtt_topic = p->value(); 
+          mqtt_tele_topic = p->value(); 
+        }
+        if(p->name() == "mqtt_cmnd_topic")
+        {
+          mqtt_cmnd_topic = p->value(); 
         }
         
         
@@ -549,7 +532,8 @@ server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
       strncpy(Config.mqtt_client_name,mqtt_client_name.c_str(),32);
       strncpy(Config.mqtt_user,mqtt_user.c_str(),32);
       strncpy(Config.mqtt_password,mqtt_password.c_str(),32);
-      strncpy(Config.mqtt_topic,mqtt_topic.c_str(),32);
+      strncpy(Config.mqtt_tele_topic,mqtt_tele_topic.c_str(),32);
+      strncpy(Config.mqtt_cmnd_topic,mqtt_cmnd_topic.c_str(),32);
 
       mqttClient.setServer(Config.mqtt_broker,Config.mqtt_port);
       mqttClient.setCallback(mqttCallback);
@@ -558,7 +542,7 @@ server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
 
     }
     const char* dataType = "text/html";
-    request->send_P(200,dataType, index_html,index_html_len,NULL);
+    request->send_P(200,dataType, mqtt_html,mqtt_html_len,mqttProcessor);
     
     //request->send(LittleFS, "/index.html", String());
   });
@@ -600,33 +584,11 @@ server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
 
     }
     const char* dataType = "text/html";
-    request->send_P(200,dataType, index_html,index_html_len,NULL);
-    //request->send(LittleFS, "/index.html", String());
+    request->send_P(200,dataType, wifi_html,wifi_html_len,netProcessor);
   });
 
-  /*server.on("/get_wifi", HTTP_GET, [](AsyncWebServerRequest *request){
-      AsyncResponseStream *response = request->beginResponseStream("application/json");
-      DynamicJsonDocument json(4096);
-      JsonObject jsonObj;
-      netscan();
-      for(int i =0; i<numberOfNetworks; i++){
-          
-          Serial.print("Network name: ");
-          Serial.println(WiFi.SSID(i));
-          Serial.print("Signal strength: ");
-          Serial.println(WiFi.RSSI(i));
-          Serial.println("-----------------------");
-          jsonObj["ssid"] = WiFi.SSID(i);
-          jsonObj["rssi"] = WiFi.RSSI(i);
-          json.add(jsonObj);
-    
-      }
-      serializeJson(json, *response);
-    request->send(response);
-  });*/
   server.on("/start_update",HTTP_GET,[](AsyncWebServerRequest *request){
       AsyncResponseStream *response = request->beginResponseStream("application/json");
-      //int ret = startUpdate();
       updateRequested = true;
       int ret = 0;
       DynamicJsonDocument json(4096);
@@ -648,12 +610,11 @@ server.on("/update", HTTP_GET, [](AsyncWebServerRequest *request){
 
 server.onNotFound(notFound);
  
-  //server.on("/action_page", handleForm);
+
  
   server.begin();
   Serial.println("HTTP server started");
   Serial.println(WiFi.localIP());
-//Serial.println(WiFi.softAPIP()); // Send the IP address of the ESP8266 to the computer
 
   mqttClient.setServer(Config.mqtt_broker,Config.mqtt_port);
   mqttClient.setCallback(mqttCallback);
@@ -695,12 +656,13 @@ void loop() {
   {
     mqttTime = now;
     Serial.println("Publishing MQTT...");
+    digitalWrite(BUILTIN_LED,1);
     //sprintf(msg,"{\"Channels\":[%d,%d,%d,%d]}",channels[0],channels[1],channels[2],channels[3]);
     int i;
     for(i=0;i<4;i++)
     {
       char topic[64];
-      sprintf(topic,"tele/irrigation/%d",i);
+      sprintf(topic,"%s/%d",Config.mqtt_tele_topic,i+1);
       if(channels[i])
         mqttClient.publish(topic,"ON");
       else
@@ -715,6 +677,8 @@ void loop() {
 
     mytime = now; 
  }
- delay(1000);
+ 
   }
+  delay(1000);
+ digitalWrite(BUILTIN_LED,0);
 }
