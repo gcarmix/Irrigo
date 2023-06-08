@@ -18,13 +18,14 @@
 
 #define U_PART U_SPIFFS
 int mqtt_status = -1;
+int mqtterror = 0;
 int channels[4] = {0,0,0,0};
 int ontime[4] = {0,0,0,0};
 void control();
 AsyncWebServer server(80);
 WiFiMulti wiFiMulti;
 long wifi_last_seen;
-#define FW_VERSION "1.0.3b"
+#define FW_VERSION "1.0.4a"
 
 typedef struct CONFIG_S{
   char essid[32] = "";
@@ -121,6 +122,7 @@ int mqttReconnect()
     char mqttWillTopic[64];
     sprintf(mqttWillTopic,"%s/LWT",Config.mqtt_tele_topic);
     if(mqttClient.connect(Config.mqtt_client_name,Config.mqtt_user,Config.mqtt_password,mqttWillTopic,1,true,"Offline")){
+      mqtterror = 0;
       mqttClient.publish(mqttWillTopic,"Online",true);
       Serial.println("connected");
       char msg[64];
@@ -131,6 +133,14 @@ int mqttReconnect()
     else
     {
       Serial.println("Error connecting to MQTT");
+      mqtterror++;
+      if(mqtterror>100)
+      {
+        Serial.println("Restarting due to MQTT timeout");
+        delay(1000);
+        ESP.restart();
+
+      }
       delay(5000);
       return -1;
     }
@@ -375,7 +385,7 @@ if(strlen(Config.essid) == 0 )
     WiFi.hostname("Irrigo");
     wiFiMulti.addAP(Config.essid, Config.password);
     // Wait for connection
-    while (wiFiMulti.run() != WL_CONNECTED) {
+    while (wiFiMulti.run(30000) != WL_CONNECTED) {
 
       digitalWrite(BUILTIN_LED,HIGH);
       delay(500);
