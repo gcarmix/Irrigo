@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Update</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script src="jquery.min.js"></script>
+  
+</head>
+
+<body>
+  <div class="topnav">
+    <a href="/" style="float:left">Irrigo</a>
+    <div class="dropdown" style="float:right">
+      <button class="dropbtn">Settings
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-content">
+        <a href="/mqtt">MQTT</a>
+        <a href="/wifi">WiFi</a>
+        <a href="/update">Update</a>
+      </div>
+    </div> 
+  </div>
+  
+          
+  <div class="formbg">
+    <div class="formbg-inner padding-horizontal--48">
+      <span class="padding-bottom--24">Update</span>
+      <span class="field padding-bottom--15">Current Firmware version: <label id="currentFirmware"></label> %FW_VER% </span>
+      <!--span class="field padding-bottom--15">Remote Firmware version: <label id="remoteFirmware"></label> %REMOTE_FW_VER%</span-->
+      <form method='POST' action='/doUpdate' enctype='multipart/form-data'>
+        <div class="field padding-bottom--24">
+          <input type='file' name='update'>
+        </div>
+        <div class="field padding-bottom--24">
+          <input type='submit' value='Update'>
+        </div>
+        
+      </form>
+    
+      </div>
+  </div>
+ 
+  <div class="footer">
+    <p>by gcarmix</p>
+  </div>
+
+</body>
+
+</html>
