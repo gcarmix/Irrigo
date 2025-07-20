@@ -10,6 +10,7 @@
 #include <Ticker.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
+#include "esp_system.h"
 //#include <esp_task_wdt.h>
 #include <ArduinoJson.h>
 #include "files.h"
@@ -25,7 +26,11 @@ void control();
 AsyncWebServer server(80);
 WiFiMulti wiFiMulti;
 long wifi_last_seen;
-#define FW_VERSION "1.0.4a"
+#define FW_VERSION "1.0.5c"
+
+void forceReset() { 
+*((volatile int*)0) = 0xDEADBEEF;
+}
 
 typedef struct CONFIG_S{
   char essid[32] = "";
@@ -138,7 +143,8 @@ int mqttReconnect()
       {
         Serial.println("Restarting due to MQTT timeout");
         delay(1000);
-        ESP.restart();
+        forceReset();
+        //ESP.restart();
 
       }
       delay(5000);
@@ -382,7 +388,7 @@ if(strlen(Config.essid) == 0 )
     apmode = 0;
     Serial.println("Starting as WiFi Client");
     WiFi.mode(WIFI_STA);
-    WiFi.hostname("Irrigo");
+    WiFi.setHostname("Irrigo");
     wiFiMulti.addAP(Config.essid, Config.password);
     // Wait for connection
     while (wiFiMulti.run(30000) != WL_CONNECTED) {
@@ -669,7 +675,8 @@ void loop() {
     {
       Serial.println("WiFi timeout. Restarting ESP");
       delay(1000);
-      ESP.restart();
+      forceReset();
+      //ESP.restart();
     }
   }
 
